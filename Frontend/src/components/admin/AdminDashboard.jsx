@@ -1,83 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [userData, setUserData] = useState(null);
-  const [stats, setStats] = useState([
-    { title: 'Total Athletes', value: '150+', change: '+12%' },
-    { title: 'Active Teams', value: '24', change: '+3%' },
-    { title: 'Upcoming Events', value: '8', change: 'Next Week' },
-    { title: 'Performance Rating', value: '92%', change: '+5%' },
-  ]);
-
-  const [recentActivities, setRecentActivities] = useState([
-    { type: 'New Athlete', message: 'John Doe registered as athlete', time: '2 hours ago' },
-    { type: 'Event', message: 'Tournament schedule updated', time: '3 hours ago' },
-    { type: 'Team', message: 'New team "Eagles" created', time: '5 hours ago' },
-    { type: 'Performance', message: 'Monthly reports generated', time: '1 day ago' },
-  ]);
+  const [stats, setStats] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
 
   useEffect(() => {
-    // Check if user is logged in and has admin role
-    const storedUserData = localStorage.getItem('userData');
-    const userRole = localStorage.getItem('userRole');
-    
-    if (!storedUserData || userRole !== 'admin') {
-      navigate('/login');
-      return;
-    }
+    const verifyAdmin = async () => {
+      try {
+        const res = await axios.get('/api/admin/me', { withCredentials: true });
+        if (res.data.role == 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          setUserData(res.data);
+          fetchDashboardData();
+        }
+      } catch (err) {
+        console.error('Unauthorized or error fetching user:', err);
+        navigate('/login');
+      }
+    };
 
-    try {
-      const parsedUserData = JSON.parse(storedUserData);
-      setUserData(parsedUserData);
-      // In a real app, you would fetch dashboard data here
-      fetchDashboardData();
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      navigate('/login');
-    }
+    verifyAdmin();
   }, [navigate]);
 
   const fetchDashboardData = async () => {
     try {
-      // In a real app, this would be an API call to get latest stats and activities
-      // For now, we'll use mock data
-      // const response = await axios.get('/api/admin/dashboard');
-      // setStats(response.data.stats);
-      // setRecentActivities(response.data.activities);
+      const res = await axios.get('/api/admin/dashboard', { withCredentials: true });
+      setStats(res.data.stats);
+      setRecentActivities(res.data.activities);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
   };
 
   const handleAddNew = () => {
-    // Handle adding new items based on active tab
     switch (activeTab) {
       case 'users':
-        // Navigate to user creation form
         navigate('/admin/users/new');
         break;
       case 'teams':
-        // Navigate to team creation form
         navigate('/admin/teams/new');
         break;
       default:
-        // Handle other cases
         console.log('Add new clicked for tab:', activeTab);
     }
   };
 
-  if (!userData) {
-    return <div>Loading...</div>;
-  }
+  if (!userData) return <div>Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -114,7 +97,6 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <div className="ml-64 p-8">
-        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Dashboard Overview</h1>
@@ -124,7 +106,7 @@ const AdminDashboard = () => {
             <button className="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
               <span className="text-gray-600">Notifications</span>
             </button>
-            <button 
+            <button
               onClick={handleAddNew}
               className="px-4 py-2 bg-indigo-500 text-white rounded-lg shadow hover:shadow-md transition-shadow"
             >
@@ -176,21 +158,21 @@ const AdminDashboard = () => {
 
         {/* Quick Actions */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <button 
+          <button
             onClick={() => navigate('/admin/athletes/new')}
             className="p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
           >
             <h3 className="font-medium text-gray-800">Add New Athlete</h3>
             <p className="text-gray-500 text-sm mt-1">Register new athletes to the system</p>
           </button>
-          <button 
+          <button
             onClick={() => navigate('/admin/events/new')}
             className="p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
           >
             <h3 className="font-medium text-gray-800">Schedule Event</h3>
             <p className="text-gray-500 text-sm mt-1">Create and manage sports events</p>
           </button>
-          <button 
+          <button
             onClick={() => navigate('/admin/reports')}
             className="p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
           >
@@ -203,4 +185,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;

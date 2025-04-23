@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate , Link } from 'react-router-dom';
+import axios from 'axios';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const [teamStats, setTeamStats] = useState([
     { title: 'Team Members', value: '25', change: '+2 this month' },
     { title: 'Average Performance', value: '87%', change: '+5%' },
@@ -21,61 +25,47 @@ const ManagerDashboard = () => {
   ]);
 
   useEffect(() => {
-    // Check if user is logged in and has manager role
-    const storedUserData = localStorage.getItem('userData');
-    const userRole = localStorage.getItem('userRole');
-    
-    if (!storedUserData || userRole !== 'manager') {
-      navigate('/login');
-      return;
-    }
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/manager/me', {
+          withCredentials: true,
+        });
+        const user = response.data;
+        if (user.role == 'manager') {
+          navigate('/manager/dashboard'); 
+          setUserData(user);
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        navigate('/login');
+      }
+    };
 
-    try {
-      const parsedUserData = JSON.parse(storedUserData);
-      setUserData(parsedUserData);
-      // In a real app, you would fetch dashboard data here
-      fetchDashboardData();
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      navigate('/login');
-    }
+    fetchUser();
   }, [navigate]);
 
-  const fetchDashboardData = async () => {
+  const handleLogout = async () => {
     try {
-      // In a real app, this would be an API call to get latest stats and team data
-      // For now, we'll use mock data
-      // const response = await axios.get('/api/manager/dashboard');
-      // setTeamStats(response.data.stats);
-      // setTeamMembers(response.data.teamMembers);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout failed:', err);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+  const handleViewMember = (name) => {
+    navigate(`/manager/team/member/${encodeURIComponent(name)}`);
   };
 
-  const handleViewMember = (memberName) => {
-    // Navigate to member details page
-    navigate(`/manager/team/member/${encodeURIComponent(memberName)}`);
-  };
-
-  const handleEditMember = (memberName) => {
-    // Navigate to member edit page
-    navigate(`/manager/team/member/${encodeURIComponent(memberName)}/edit`);
+  const handleEditMember = (name) => {
+    navigate(`/manager/team/member/${encodeURIComponent(name)}/edit`);
   };
 
   const handleScheduleTraining = () => {
-    // Navigate to training scheduling page
     navigate('/manager/schedule/training');
   };
 
-  if (!userData) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div className="p-8">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -83,30 +73,28 @@ const ManagerDashboard = () => {
       <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800">Manager Portal</h2>
-          <p className="text-gray-500">Welcome, {userData.name}</p>
+          <p className="text-gray-500">Welcome, {userData ? userData.username : 'Manager'}</p>
         </div>
-        <nav className="mt-6">
-          <div className="px-4 space-y-2">
-            {['Overview', 'Teams', 'Schedule', 'Performance'].map((item) => (
-              <button
-                key={item}
-                onClick={() => setActiveTab(item.toLowerCase())}
-                className={`w-full px-4 py-3 text-left rounded-lg transition-colors ${
-                  activeTab === item.toLowerCase()
-                    ? 'bg-indigo-500 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {item}
-              </button>
-            ))}
+        <nav className="mt-6 px-4 space-y-2">
+          {['Overview', 'Teams', 'Schedule', 'Performance'].map((item) => (
             <button
-              onClick={handleLogout}
-              className="w-full px-4 py-3 text-left rounded-lg transition-colors text-red-600 hover:bg-red-50 mt-4"
+              key={item}
+              onClick={() => setActiveTab(item.toLowerCase())}
+              className={`w-full px-4 py-3 text-left rounded-lg transition-colors ${
+                activeTab === item.toLowerCase()
+                  ? 'bg-indigo-500 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
             >
-              Logout
+              {item}
             </button>
-          </div>
+          ))}
+          <button
+            onClick={handleLogout}
+            className="w-full px-4 py-3 text-left rounded-lg text-red-600 hover:bg-red-50 mt-4"
+          >
+            Logout
+          </button>
         </nav>
       </div>
 
@@ -119,19 +107,19 @@ const ManagerDashboard = () => {
             <p className="text-gray-500">Manage your team's performance and schedule</p>
           </div>
           <div className="space-x-4">
-            <button className="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+            <Link to='/chat' className="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
               <span className="text-gray-600">Team Chat</span>
-            </button>
-            <button 
+            </Link>
+            <button
               onClick={handleScheduleTraining}
-              className="px-4 py-2 bg-indigo-500 text-white rounded-lg shadow hover:shadow-md transition-shadow"
+              className="px-4 py-2 bg-indigo-500 text-white rounded-lg shadow hover:shadow-md"
             >
               Schedule Training
             </button>
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {teamStats.map((stat, index) => (
             <motion.div
@@ -150,13 +138,13 @@ const ManagerDashboard = () => {
           ))}
         </div>
 
-        {/* Team Members Table */}
+        {/* Team Table */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-800">Team Members</h2>
-            <button 
+            <button
               onClick={() => navigate('/manager/team/members')}
-              className="px-4 py-2 text-indigo-500 hover:text-indigo-600 transition-colors"
+              className="px-4 py-2 text-indigo-500 hover:text-indigo-600"
             >
               View All Members
             </button>
@@ -184,21 +172,25 @@ const ManagerDashboard = () => {
                     <td className="py-4 px-4">{member.name}</td>
                     <td className="py-4 px-4">{member.position}</td>
                     <td className="py-4 px-4">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        member.status === 'Active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          member.status === 'Active'
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-red-100 text-red-600'
+                        }`}
+                      >
                         {member.status}
                       </span>
                     </td>
                     <td className="py-4 px-4">{member.performance}</td>
                     <td className="py-4 px-4">
-                      <button 
+                      <button
                         onClick={() => handleViewMember(member.name)}
                         className="text-blue-500 hover:text-blue-600 mr-3"
                       >
                         View
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleEditMember(member.name)}
                         className="text-gray-500 hover:text-gray-600"
                       >
@@ -214,23 +206,23 @@ const ManagerDashboard = () => {
 
         {/* Quick Actions */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <button 
+          <button
             onClick={() => navigate('/manager/schedule/match')}
-            className="p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+            className="p-4 bg-white rounded-xl shadow-sm hover:shadow-md"
           >
             <h3 className="font-medium text-gray-800">Schedule Match</h3>
             <p className="text-gray-500 text-sm mt-1">Plan upcoming games</p>
           </button>
-          <button 
+          <button
             onClick={() => navigate('/manager/training/plan')}
-            className="p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+            className="p-4 bg-white rounded-xl shadow-sm hover:shadow-md"
           >
             <h3 className="font-medium text-gray-800">Training Plan</h3>
             <p className="text-gray-500 text-sm mt-1">Create training schedules</p>
           </button>
-          <button 
+          <button
             onClick={() => navigate('/manager/performance/review')}
-            className="p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+            className="p-4 bg-white rounded-xl shadow-sm hover:shadow-md"
           >
             <h3 className="font-medium text-gray-800">Performance Review</h3>
             <p className="text-gray-500 text-sm mt-1">Evaluate team performance</p>
@@ -241,4 +233,4 @@ const ManagerDashboard = () => {
   );
 };
 
-export default ManagerDashboard; 
+export default ManagerDashboard;

@@ -4,71 +4,46 @@ import axios from 'axios';
 
 const Register = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'player', // Default role
-  });
+
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('player');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
 
-    // Password validation
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       setError('Passwords do not match');
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
+    setError('');
+
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/auth/sign-up', {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-        role: formData.role,
+      const response = await axios.post('http://localhost:5000/api/register', {
+        username,
+        email,
+        password,
+        role,
       });
 
-      // Registration successful, automatically log in the user
-      const { token, role, userData } = response.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('userRole', role);
-      localStorage.setItem('userData', JSON.stringify(userData));
+      console.log("Registration successful:", response.data);
 
-      // Navigate based on user role
-      switch (role) {
-        case 'admin':
-          navigate('/admin/dashboard');
-          break;
-        case 'manager':
-          navigate('/manager/dashboard');
-          break;
-        case 'player':
-          navigate('/player/dashboard');
-          break;
-        default:
-          setError('Invalid user role');
-      }
+      // Redirect to login after successful registration
+      navigate('/login');
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 py-12 px-4 sm:px-6 lg:px-8">
@@ -83,83 +58,58 @@ const Register = () => {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="username" className="sr-only">
-                Full Name
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="sr-only">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="role" className="sr-only">
-                Role
-              </label>
-              <select
-                id="role"
-                name="role"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                value={formData.role}
-                onChange={handleChange}
-              >
-                <option value="player" name="player">Player</option>
-                <option value="manager" name="manager">Team Manager</option>
-                <option value="admin" name="admin">Admin</option>
-              </select>
-            </div>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              required
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              placeholder="Full Name"
+              onChange={(e) => setUsername(e.target.value)}
+              value={username}
+            />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              placeholder="Email address"
+              onChange={(e) => setEmail(e.target.value)}
+              value={email}
+            />
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              placeholder="Password"
+              onChange={(e) => setPassword(e.target.value)}
+              value={password}
+            />
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              required
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              placeholder="Confirm Password"
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              value={confirmPassword}
+            />
+            <select
+              id="role"
+              name="role"
+              required
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              onChange={(e) => setRole(e.target.value)}
+              value={role}
+            >
+              <option value="player">Player</option>
+              <option value="manager">Team Manager</option>
+              <option value="admin">Admin</option>
+            </select>
           </div>
 
           {error && (
@@ -192,4 +142,4 @@ const Register = () => {
   );
 };
 
-export default Register; 
+export default Register;

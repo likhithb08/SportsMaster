@@ -51,6 +51,7 @@ const LandingPage = () => {
               <p className="text-xl text-gray-300 mb-12 max-w-3xl">
                 Streamline team operations, track performance, and achieve excellence with our comprehensive sports management platform
               </p>
+              <Link to='/register'>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -58,6 +59,7 @@ const LandingPage = () => {
               >
                 Get Started Now
               </motion.button>
+              </Link>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 20 }}
