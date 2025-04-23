@@ -1,33 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Chat = () => {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: 'Coach Mike', content: 'Team meeting at 3 PM tomorrow', timestamp: '2024-03-17 10:00 AM', role: 'manager' },
-    { id: 2, sender: 'John Player', content: 'Will be there!', timestamp: '2024-03-17 10:05 AM', role: 'player' },
-    { id: 3, sender: 'Admin', content: 'Remember to bring your equipment', timestamp: '2024-03-17 10:10 AM', role: 'admin' },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
+
+  // Fetch current user from backend
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/player/me', {
+          credentials: 'include', // Assumes token is in HttpOnly cookie
+        });
+        const user = await res.json();
+        setCurrentUser(user);
+      } catch (err) {
+        console.error('Error fetching user:', err);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  // Fetch messages from backend
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/chat');
+        const data = await response.json();
+        setMessages(data);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
+
+    fetchMessages();
+  }, []);
 
   const handleLogout = () => {
     navigate('/login');
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !currentUser) return;
 
     const newMsg = {
-      id: messages.length + 1,
-      sender: 'You',
+      sender: currentUser.username,
       content: newMessage,
-      timestamp: new Date().toLocaleString(),
-      role: 'player' // This would normally be determined by the logged-in user's role
+      role: currentUser.role,
     };
 
-    setMessages([...messages, newMsg]);
-    setNewMessage('');
+    try {
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(newMsg),
+      });
+
+      const savedMessage = await response.json();
+      setMessages([...messages, savedMessage]);
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   const getRoleColor = (role) => {
@@ -48,15 +87,13 @@ const Chat = () => {
       <nav className="bg-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold">Team Chat</h1>
-              </div>
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold">Team Chat</h1>
             </div>
             <div className="flex items-center">
               <button
                 onClick={handleLogout}
-                className="ml-4 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="ml-4 px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700"
               >
                 Logout
               </button>
@@ -71,9 +108,9 @@ const Chat = () => {
           <div className="h-[600px] overflow-y-auto p-4 space-y-4">
             {messages.map((message) => (
               <div
-                key={message.id}
+                key={message._id}
                 className={`flex flex-col ${
-                  message.sender === 'You' ? 'items-end' : 'items-start'
+                  message.sender === currentUser?.username ? 'items-end' : 'items-start'
                 }`}
               >
                 <div className="flex items-center space-x-2 mb-1">
@@ -86,7 +123,7 @@ const Chat = () => {
                 </div>
                 <div
                   className={`max-w-sm rounded-lg p-3 ${
-                    message.sender === 'You'
+                    message.sender === currentUser?.username
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-900'
                   }`}
@@ -122,4 +159,4 @@ const Chat = () => {
   );
 };
 
-export default Chat; 
+export default Chat;

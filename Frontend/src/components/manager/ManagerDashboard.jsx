@@ -108,7 +108,7 @@ const ManagerDashboard = () => {
           </div>
           <div className="space-x-4">
             <Link to='/chat' className="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-              <span className="text-gray-600">Team Chat</span>
+              <span className="text-gray-600"> Chat</span>
             </Link>
             <button
               onClick={handleScheduleTraining}

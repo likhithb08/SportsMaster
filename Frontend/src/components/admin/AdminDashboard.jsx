@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate , Link } from 'react-router-dom';
 import axios from 'axios';
 
 const AdminDashboard = () => {
@@ -106,6 +106,9 @@ const AdminDashboard = () => {
             <button className="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
               <span className="text-gray-600">Notifications</span>
             </button>
+            <Link to="/chat" className="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                <span className="text-gray-600"> Chat</span>
+            </Link>
             <button
               onClick={handleAddNew}
               className="px-4 py-2 bg-indigo-500 text-white rounded-lg shadow hover:shadow-md transition-shadow"
