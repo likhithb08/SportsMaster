@@ -6,6 +6,9 @@ import PlayerDashboard from './components/player/PlayerDashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import ManagerDashboard from './components/manager/ManagerDashboard';
 import Chat from './components/Chat';
+import EventPage from './components/eventForm/EventPage'
+import EventsPage from './components/eventForm/EventsPage'
+import  EventForm from './components/eventForm/EventForm'
 
 
 function App() {
@@ -19,7 +22,9 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/manager/dashboard" element={<ManagerDashboard />} />
         <Route path="/chat" element={<Chat />} />
-
+        <Route path="/admin/events" element={<EventPage />} />
+        <Route path="/admin/events/new" element={<EventForm />} />
+        <Route path="/events" element={<EventsPage />} />
       </Routes>
     </Router>
   );

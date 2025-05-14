@@ -26,6 +26,16 @@ const AdminDashboard = () => {
       }
     };
 
+    
+const handleAddNew = () => {
+  switch (activeTab) {
+    case 'events':
+      navigate('/admin/events/new');
+      break;
+
+  }
+};
+
     verifyAdmin();
   }, [navigate]);
 
